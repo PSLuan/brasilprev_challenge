@@ -1,0 +1,26 @@
+services:
+  brasilprev-java:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: brasilprev_java
+    restart: on-failure
+    env_file:
+      - src/.env
+    ports:
+      - 8099:8099
+    depends_on:
+      - brasilprev-postgresql
+
+  brasilprev-postgresql:
+    image: postgres:latest
+    container_name: brasilprev_postgresql
+    restart: on-failure
+    ports:
+      - 5432:5432
+    env_file:
+      - src/.env
+
+networks:
+  web:
+    external: true

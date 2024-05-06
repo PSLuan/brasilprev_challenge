@@ -1,0 +1,63 @@
+server:
+  port: 8099
+  servlet:
+    encoding:
+      charset: utf-8
+      enabled: true
+
+database:
+  url: jdbc:postgresql://brasilprev-postgresql:5432/brasilprev
+  username: postgres
+  password: postgres
+  driver: org.postgresql.Driver
+  dialect: org.hibernate.dialect.PostgreSQLDialect
+
+spring:
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
+    static-path-pattern: /swagger*
+  application:
+    name: Brasilprev API
+  datasource:
+    url: ${database.url}
+    username: ${database.username}
+    password: ${database.password}
+    driver-class-name: ${database.driver}
+    hikari:
+      pool-name: brasilprev-api-pool
+      connection-timeout: 20000
+      minimum-idle: 1
+      maximum-pool-size: 10
+      idle-timeout: 10000
+      max-lifetime: 600000
+      auto-commit: true
+  jpa:
+    hibernate:
+      ddl-auto: none
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+    properties:
+      hibernate:
+        dialect: ${database.dialect}
+        show_sql: true
+        hbm2ddl:
+          auto: update
+  banner:
+    location: static/banner.txt
+  servlet:
+    multipart:
+      max-file-size: 16MB
+      max-request-size: 16MB
+
+logging:
+  level:
+    root: info
+    web: debug
+    sql: info
+    org.springframework: info
+    org.hibernate: INFO
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
