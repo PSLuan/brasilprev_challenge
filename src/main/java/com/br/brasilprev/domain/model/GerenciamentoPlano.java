@@ -35,4 +35,7 @@ public class GerenciamentoPlano {
     @Column(name = "data_resgate")
     private LocalDateTime dataDoResgate;
 
+    @Column(name = "ativo")
+    private Boolean ativo;
+
 }

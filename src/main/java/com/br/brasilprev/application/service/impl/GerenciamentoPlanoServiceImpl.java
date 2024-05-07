@@ -56,6 +56,7 @@ public class GerenciamentoPlanoServiceImpl implements GerenciamentoPlanoService 
                                 .aporte(gerenciamentoPlanoRequest.getAporte())
                                 .dataDaContratacao(OffsetDateTime.parse(gerenciamentoPlanoRequest.getDataDaContratacao()).toLocalDateTime())
                                 .idadeDeAposentadoria(gerenciamentoPlanoRequest.getIdadeDeAposentadoria())
+                                .ativo(Boolean.TRUE)
                                 .build());
                         return ResponseEntity.ok(gerenciamentoPlano.getId());
                     }
@@ -85,7 +86,7 @@ public class GerenciamentoPlanoServiceImpl implements GerenciamentoPlanoService 
         if (gerenciamentoPlano.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        if (aporteExtraRequest.getValorAporte() >= gerenciamentoPlano.get().getProduto().getValorMinimoAporteExtra()) { //validar valor extra de aporte
+        if (aporteExtraRequest.getValorAporte() >= gerenciamentoPlano.get().getProduto().getValorMinimoAporteExtra() && gerenciamentoPlano.get().getAtivo() == Boolean.TRUE) { //validar valor extra de aporte
             gerenciamentoPlano.get().setAporte(gerenciamentoPlano.get().getAporte() + aporteExtraRequest.getValorAporte());
             gerenciamentoPlanoRepository.save(gerenciamentoPlano.get());
             return ResponseEntity.ok(gerenciamentoPlano.get().getId());
@@ -99,22 +100,28 @@ public class GerenciamentoPlanoServiceImpl implements GerenciamentoPlanoService 
         if (gerenciamentoPlano.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        if (LocalDateTime.now().isAfter(gerenciamentoPlano.get().getDataDaContratacao().plusDays(gerenciamentoPlano.get().getProduto().getCarenciaInicialDeResgate()))) {
+        if (LocalDateTime.now().isAfter(gerenciamentoPlano.get().getDataDaContratacao().plusDays(gerenciamentoPlano.get().getProduto().getCarenciaInicialDeResgate())) && gerenciamentoPlano.get().getAtivo() == Boolean.TRUE) {
             if (gerenciamentoPlano.get().getAporte() >= resgateRequest.getValorResgate()) {
                 if (gerenciamentoPlano.get().getDataDoResgate() != null) {
                     if (gerenciamentoPlano.get().getDataDoResgate().isBefore(gerenciamentoPlano.get().getDataDoResgate().minusDays(gerenciamentoPlano.get().getProduto().getCarenciaEntreResgates()))) {
-                        gerenciamentoPlano.get().setAporte(gerenciamentoPlano.get().getAporte() - resgateRequest.getValorResgate());
-                        gerenciamentoPlanoRepository.save(gerenciamentoPlano.get());
-                        return ResponseEntity.ok(gerenciamentoPlano.get().getId());
+                        return setNovoSaldo(resgateRequest, gerenciamentoPlano.get());
                     }
                 } else {
-                    gerenciamentoPlano.get().setAporte(gerenciamentoPlano.get().getAporte() - resgateRequest.getValorResgate());
-                    gerenciamentoPlanoRepository.save(gerenciamentoPlano.get());
-                    return ResponseEntity.ok(gerenciamentoPlano.get().getId());
+                    return setNovoSaldo(resgateRequest, gerenciamentoPlano.get());
                 }
             }
         }
         return ResponseEntity.badRequest().build();
+    }
+
+    private ResponseEntity<Long> setNovoSaldo(ResgateRequest resgateRequest, GerenciamentoPlano gerenciamentoPlano) {
+        gerenciamentoPlano.setAporte(gerenciamentoPlano.getAporte() - resgateRequest.getValorResgate());
+        gerenciamentoPlano.setDataDoResgate(LocalDateTime.now());
+        if (gerenciamentoPlano.getAporte() == 0) {
+            gerenciamentoPlano.setAtivo(Boolean.FALSE);
+        }
+        gerenciamentoPlanoRepository.save(gerenciamentoPlano);
+        return ResponseEntity.ok(gerenciamentoPlano.getId());
     }
 
 }
