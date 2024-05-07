@@ -13,10 +13,13 @@ import com.br.brasilprev.infrastructure.request.ResgateRequest;
 import com.br.brasilprev.infrastructure.response.GerenciamentoPlanoResponse;
 import com.br.brasilprev.utils.GerenciamentoPlanoUtils;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -24,6 +27,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class GerenciamentoPlanoServiceImpl implements GerenciamentoPlanoService {
 
+    private static final Logger log = LoggerFactory.getLogger(GerenciamentoPlanoServiceImpl.class);
     private final GerenciamentoPlanoRepository gerenciamentoPlanoRepository;
     private final ClienteRepository clienteRepository;
     private final ProdutoRepository produtoRepository;
@@ -50,7 +54,7 @@ public class GerenciamentoPlanoServiceImpl implements GerenciamentoPlanoService 
                                 .cliente(cliente.get())
                                 .produto(produto.get())
                                 .aporte(gerenciamentoPlanoRequest.getAporte())
-                                .dataDaContratacao(LocalDateTime.now())
+                                .dataDaContratacao(OffsetDateTime.parse(gerenciamentoPlanoRequest.getDataDaContratacao()).toLocalDateTime())
                                 .idadeDeAposentadoria(gerenciamentoPlanoRequest.getIdadeDeAposentadoria())
                                 .build());
                         return ResponseEntity.ok(gerenciamentoPlano.getId());
@@ -95,7 +99,7 @@ public class GerenciamentoPlanoServiceImpl implements GerenciamentoPlanoService 
         if (gerenciamentoPlano.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        if (gerenciamentoPlano.get().getDataDaContratacao().isBefore(gerenciamentoPlano.get().getDataDaContratacao().minusDays(gerenciamentoPlano.get().getProduto().getCarenciaInicialDeResgate()))) {
+        if (LocalDateTime.now().isAfter(gerenciamentoPlano.get().getDataDaContratacao().plusDays(gerenciamentoPlano.get().getProduto().getCarenciaInicialDeResgate()))) {
             if (gerenciamentoPlano.get().getAporte() >= resgateRequest.getValorResgate()) {
                 if (gerenciamentoPlano.get().getDataDoResgate() != null) {
                     if (gerenciamentoPlano.get().getDataDoResgate().isBefore(gerenciamentoPlano.get().getDataDoResgate().minusDays(gerenciamentoPlano.get().getProduto().getCarenciaEntreResgates()))) {
@@ -103,10 +107,11 @@ public class GerenciamentoPlanoServiceImpl implements GerenciamentoPlanoService 
                         gerenciamentoPlanoRepository.save(gerenciamentoPlano.get());
                         return ResponseEntity.ok(gerenciamentoPlano.get().getId());
                     }
+                } else {
+                    gerenciamentoPlano.get().setAporte(gerenciamentoPlano.get().getAporte() - resgateRequest.getValorResgate());
+                    gerenciamentoPlanoRepository.save(gerenciamentoPlano.get());
+                    return ResponseEntity.ok(gerenciamentoPlano.get().getId());
                 }
-                gerenciamentoPlano.get().setAporte(gerenciamentoPlano.get().getAporte() - resgateRequest.getValorResgate());
-                gerenciamentoPlanoRepository.save(gerenciamentoPlano.get());
-                return ResponseEntity.ok(gerenciamentoPlano.get().getId());
             }
         }
         return ResponseEntity.badRequest().build();
