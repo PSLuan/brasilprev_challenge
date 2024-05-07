@@ -7,15 +7,11 @@ Brasilprev challenge
 
 2. Tenha instalado o `docker`.
 
-3. Tenha instalado o `jdk`.
-
 4. Abrir o terminal na pasta raíz do projeto.
 
-5. Executar o comando `mvn clean install -DskipTests`.
+5. Executar o comando `docker compose up -d`
 
-6. Executar o comando `docker compose up -d`
-
-7. Acessar a seguinte url: http://localhost:8099/swagger-ui/index.html#
+6. Acessar a seguinte url: http://localhost:8099/swagger-ui/index.html#
 
 ### Acessar o banco de dados
 
