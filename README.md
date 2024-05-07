@@ -9,7 +9,7 @@ Brasilprev challenge
 
 4. Abrir o terminal na pasta raíz do projeto.
 
-5. Executar o comando `docker compose up -d`
+5. Executar o comando `docker compose up -d` ou `docker-compose up -d` (depende da versão do Docker utilizado).
 
 6. Acessar a seguinte url: http://localhost:8099/swagger-ui/index.html#
 
